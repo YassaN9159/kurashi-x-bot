@@ -20,105 +20,56 @@ LESSONS_FILE = "lessons.json"
 MAX_LESSONS = 20
 
 RSS_FEEDS = [
-    {"name": "価格.com 新製品", "url": "https://news.kakaku.com/prdnews/rss/"},
-    {"name": "ASCII.jp",        "url": "https://ascii.jp/rss.xml"},
-    {"name": "ITmedia ニュース", "url": "https://rss.itmedia.co.jp/rss/2.0/news.xml"},
-    {"name": "PC Watch",        "url": "https://pc.watch.impress.co.jp/data/rss/1.0/pcw/feed.rdf"},
-    {"name": "AV Watch",        "url": "https://av.watch.impress.co.jp/data/rss/1.0/avw/feed.rdf"},
-    {"name": "Akiba PC Hotline","url": "https://akiba-pc.watch.impress.co.jp/data/rss/1.0/ah/feed.rdf"},
-    # レビュー・スペック記事が多いメディア
-    {"name": "Engadget Japan",  "url": "https://japanese.engadget.com/rss.xml"},
-    {"name": "GIZMODO Japan",   "url": "https://www.gizmodo.jp/index.xml"},
+    {"name": "RoomClip マガジン",   "url": "https://magazine.roomclip.jp/feed"},
+    {"name": "LIMIA",               "url": "https://limia.jp/feed/"},
+    {"name": "ROOMIE",              "url": "https://www.roomie.jp/feed/"},
+    {"name": "ESSE online",         "url": "https://esse-online.jp/feed/"},
+    {"name": "kufura",              "url": "https://kufura.jp/feed/"},
+    {"name": "暮らしニスタ",         "url": "https://kurashinista.jp/feed"},
+    {"name": "北欧、暮らしの道具店", "url": "https://hokuohkurashi.com/note/feed"},
+    {"name": "Suumo ジャーナル",    "url": "https://suumo.jp/journal/feed/"},
 ]
 
-# 最優先カテゴリ: iPad実績のように高額購入が発生しやすいカテゴリ
-# PC系は除外（フィード量が多く飽和しやすいため別制御）
-PREMIUM_KEYWORDS = [
-    # スマホ・タブレット（高額・高回転）
-    "iPhone", "iPad", "Galaxy", "Pixel", "Xperia",
-    "AQUOS", "Zenfone", "OPPO", "vivo",
-    # カメラ（高額・高コミッション）
-    "カメラ", "レンズ", "ミラーレス", "一眼", "GoPro", "DJI", "アクションカム",
-    # オーディオ（高単価・衝動買い多い）
-    "AirPods", "ヘッドホン", "イヤホン", "Walkman", "ウォークマン",
-    # VR・体験系（高額・話題性）
-    "Meta Quest", "Vision Pro",
-    # ゲーム機
-    "PlayStation", "PS5", "Nintendo Switch",
+KURASHI_KEYWORDS = [
+    # インテリア
+    "インテリア", "家具", "ソファ", "テーブル", "椅子", "棚", "本棚",
+    "照明", "ライト", "カーテン", "ラグ", "クッション", "壁紙",
+    # 収納・整理
+    "収納", "整理", "片付け", "断捨離", "整頓", "収納グッズ", "仕切り",
+    "ボックス", "かご", "引き出し", "クローゼット",
+    # キッチン・家事
+    "キッチン", "食洗機", "電気ケトル", "ホットクック", "電子レンジ",
+    "掃除", "洗濯", "家事", "ロボット掃除機", "ルンバ", "ブラーバ",
+    # 暮らし全般
+    "暮らし", "生活", "丁寧な暮らし", "シンプルライフ", "ミニマリスト",
+    "観葉植物", "グリーン", "DIY", "セルフリノベ",
+    # 新居・住まい
+    "新築", "注文住宅", "マイホーム", "間取り", "新居",
+    # ブランド
+    "無印良品", "IKEA", "イケア", "ニトリ", "カインズ",
+    # スマートホーム
+    "スマートホーム", "IoT", "スマートスピーカー", "Alexa", "Google Home",
+    # 防災
+    "防災", "非常用", "備蓄",
 ]
 
-# 高単価カテゴリのキーワード（タイトルに含まれる場合に優先）
-HIGH_VALUE_KEYWORDS = PREMIUM_KEYWORDS + [
-    # PC・ブランド（フィードに多いため PREMIUM に入れず）
-    "ノートPC", "デスクトップ", "ゲーミングPC", "GPU", "グラボ", "GeForce", "Radeon",
-    "CPU", "メモリ", "SSD", "NVMe", "マザーボード",
-    "MacBook", "Mac Mini", "Mac Studio", "iMac",
-    "ThinkPad", "ThinkCentre", "ThinkBook",
-    "XPS", "Inspiron", "Alienware",
-    "Surface",
-    "Chromebook", "ChromeOS",
-    "VAIO", "Dynabook", "Aspire", "Swift",
-    # その他高単価
-    "スピーカー", "サウンドバー", "DAP", "Galaxy Buds", "Soundcore",
-    "VR", "AR", "MR", "XR", "ヘッドセット",
-    "AirTag", "スマートタグ", "トラッカー", "Quest",
-    "冷蔵庫", "洗濯機", "エアコン", "掃除機", "ロボット掃除機", "テレビ", "4K", "8K",
-    "プロジェクター", "電子レンジ", "オーブン", "食洗機",
-    "冷凍庫", "ポータブル冷蔵庫", "ポータブル冷凍庫",
-    "Xbox",
-    "サンコー", "Anker", "Belkin", "Baseus",
+# 優先キーワード（フィード上位に表示）
+PRIORITY_KEYWORDS = [
+    "インテリア", "収納", "整理", "マイホーム", "新築", "注文住宅",
+    "無印良品", "IKEA", "ニトリ", "ロボット掃除機",
 ]
 
-# 除外キーワード（ガジェット以外のジャンルをスキップ）
+# 除外キーワード（暮らし系以外のジャンルをスキップ）
 EXCLUDE_KEYWORDS = [
-    # 車・自動車
-    "自動車", "クルマ", "電気自動車", "ハイブリッド車",
-    "トヨタ", "ホンダ", "日産", "BMW", "ベンツ",
-    # 時計（スマートウォッチは除く）
-    "腕時計", "機械式時計", "高級時計", "ロレックス", "オメガ",
-    # 寝具・日用品
-    "枕", "布団", "マットレス", "寝具", "シーツ",
-    # エンタメ・芸能
-    "アイドル", "歌手", "俳優", "タレント", "芸能人",
-    "アルバム", "シングル", "ライブ", "コンサート", "映画", "ドラマ",
-    # エネルギー・政策・法規制
-    "太陽光", "義務化", "条例", "法改正", "補助金", "助成金",
-    # 食品・グルメ全般
-    "食品", "飲料", "グルメ", "レストラン", "カフェ", "料理",
-    "スイーツ", "ケーキ", "パン", "菓子", "チョコ", "アイス",
-    "ラーメン", "寿司", "弁当", "惣菜", "食べ物", "食材",
-    "コンビニ", "スーパー", "飲食",
-    # 健康・医療
-    "サプリ", "医薬品", "病院", "クリニック", "健康食品",
-    # スポーツ
-    "野球", "サッカー", "テニス", "ゴルフ", "バスケ",
-    # 中古・リユース品（新製品記事のみ対象）
-    "中古", "リユース品", "フリマ", "ジャンク", "二手",
-    # 業界動向・サービス変更（購買意図なし）
-    "撤退", "廃止", "サービス終了", "放送終了", "配信終了",
-    "値上げ", "料金改定", "統合", "合併", "買収",
-    # 放送・通信行政
-    "4K放送", "地上波", "衛星放送", "BS放送", "CS放送",
-    "ケーブルテレビ", "CATV",
-]
-
-# ガジェット関連キーワード（いずれか1つ以上がタイトルに含まれる記事のみ投稿）
-GADGET_KEYWORDS = HIGH_VALUE_KEYWORDS + [
-    "スマホ", "スマートフォン", "スマートウォッチ", "ウェアラブル",
-    "タブレット", "PC", "パソコン", "ラップトップ",
-    "ゲーム", "ゲーミング", "コントローラー",
-    "充電器", "バッテリー", "ケーブル", "アダプター", "モバイルバッテリー",
-    "ディスプレイ", "モニター", "液晶", "有機EL", "OLED",
-    "ルーター", "Wi-Fi", "Bluetooth", "無線LAN",
-    "5G", "6G", "AI", "チップ", "プロセッサ",
-    "ドローン", "ロボット", "スマートホーム",
-    "ガジェット", "デバイス", "テック", "家電", "電子機器",
-    # キーボード・入力デバイス
-    "キーボード", "マウス", "トラックパッド", "REALFORCE", "HHK",
-    # スマートグラス・ウェアラブル
-    "スマートグラス", "スマート眼鏡",
-    # 扇風機・ポータブル家電（ガジェット系メーカーのもの）
-    "扇風機", "DCモーター", "サーキュレーター",
+    "スマホ", "iPhone", "Android", "PC", "ノートPC", "パソコン", "タブレット",
+    "ゲーム", "PlayStation", "Nintendo", "Xbox",
+    "自動車", "クルマ", "バイク", "EV",
+    "株", "投資", "FX", "仮想通貨", "暗号資産",
+    "アニメ", "マンガ", "映画", "ドラマ",
+    "転職", "就活", "資格",
+    "カメラ", "レンズ", "ミラーレス",
+    "イヤホン", "ヘッドホン", "AirPods",
+    "GPU", "CPU", "SSD", "メモリ",
 ]
 
 # ===== LESSONS =====
@@ -156,8 +107,6 @@ def save_lessons(new_lessons: list) -> None:
 # ===== STATE =====
 MAX_STATE_URLS = 200   # posted_urls の上限（古い順に削除）
 SKIP_TTL_DAYS = 3      # skip_urls の有効期限（日）。キーワード変更後も自動再チェック
-PC_INTERVAL = 2        # PC系記事をこの件数連続したら次は非PC（premium or 普通記事）を優先
-
 def load_state():
     if Path(STATE_FILE).exists():
         try:
@@ -182,13 +131,12 @@ def load_state():
             if expired > 0:
                 print(f"skip_urls: {expired}件の期限切れエントリを削除（{SKIP_TTL_DAYS}日TTL）")
 
-            pc_streak = state.get("pc_streak", 0)
-            return posted, valid_skip, pc_streak
+            return posted, valid_skip
         except (json.JSONDecodeError, OSError) as e:
             print(f"state.json読み込みエラー（リセットします）: {e}")
-    return [], {}, 0
+    return [], {}
 
-def save_state(posted_urls, skip_urls_dict, pc_streak=0):
+def save_state(posted_urls, skip_urls_dict):
     # posted_urls は上限超えたら古い順に削除
     trimmed = list(posted_urls)
     if len(trimmed) > MAX_STATE_URLS:
@@ -198,7 +146,6 @@ def save_state(posted_urls, skip_urls_dict, pc_streak=0):
         json.dump({
             "posted_urls": trimmed,
             "skip_urls": skip_urls_dict,
-            "pc_streak": pc_streak,
         }, f, ensure_ascii=False, indent=2)
 
 # レビュー・新発売キーワード（伸びやすい記事タイプ）
@@ -210,17 +157,14 @@ REVIEW_OR_NEW_KEYWORDS = [
 ]
 
 # ===== FETCH RSS =====
-def _is_premium(title: str) -> bool:
-    return any(kw in title for kw in PREMIUM_KEYWORDS)
-
-def _is_high_value(title: str) -> bool:
-    return any(kw in title for kw in HIGH_VALUE_KEYWORDS)
-
 def _is_excluded(title: str) -> bool:
     return any(kw in title for kw in EXCLUDE_KEYWORDS)
 
-def _is_gadget_related(title: str) -> bool:
-    return any(kw in title for kw in GADGET_KEYWORDS)
+def _is_kurashi_related(title: str) -> bool:
+    return any(kw in title for kw in KURASHI_KEYWORDS)
+
+def _is_priority(title: str) -> bool:
+    return any(kw in title for kw in PRIORITY_KEYWORDS)
 
 def _is_review_or_new(title: str) -> bool:
     return any(kw in title for kw in REVIEW_OR_NEW_KEYWORDS)
@@ -285,9 +229,9 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
                     print(f"  [除外KW] {short}")
                     new_skips[url] = today_str
                     continue
-                if not _is_gadget_related(title):
+                if not _is_kurashi_related(title):
                     stats["not_gadget_kw"] += 1
-                    print(f"  [ガジェット外] {short}")
+                    print(f"  [暮らし外] {short}")
                     new_skips[url] = today_str
                     continue
                 if not _is_gadget_by_claude(title, feed_info["name"]):
@@ -297,10 +241,9 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
                     continue
 
                 stats["passed"] += 1
-                is_prem = _is_premium(title)
-                is_high = _is_high_value(title)
+                is_prio = _is_priority(title)
                 is_rev = _is_review_or_new(title)
-                tier = "💎premium" if is_prem else ("📦high" if is_high else "📄normal")
+                tier = "★priority" if is_prio else "📄normal"
                 rev_label = "📝" if is_rev else ""
                 print(f"  [通過✓] [{tier}]{rev_label} {short}")
                 articles.append({
@@ -308,8 +251,7 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
                     "title": title,
                     "summary": entry.get("summary", "")[:500],
                     "source": feed_info["name"],
-                    "premium": is_prem,
-                    "high_value": is_high,
+                    "priority": is_prio,
                     "review_or_new": is_rev,
                 })
         except Exception as e:
@@ -321,24 +263,21 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
         f"  投稿済みスキップ: {stats['already_posted']}件\n"
         f"  キャッシュスキップ: {stats['skip_cached']}件\n"
         f"  除外KW: {stats['excluded']}件\n"
-        f"  ガジェット外: {stats['not_gadget_kw']}件\n"
+        f"  暮らし外: {stats['not_gadget_kw']}件\n"
         f"  Claude除外: {stats['rejected_by_claude']}件\n"
         f"  通過: {stats['passed']}件"
     )
 
-    # ソート: 0: premium+review  1: 普通+review  2: premium  3: high+review  4: high  5: normal
+    # ソート: 0: priority+review  1: priority  2: review  3: normal
     def _sort_key(a):
         rev = a.get("review_or_new", False)
-        if a["premium"]:
-            return 0 if rev else 2
-        if a["high_value"]:
-            return 3 if rev else 4
-        return 1 if rev else 5
+        if a["priority"]:
+            return 0 if rev else 1
+        return 2 if rev else 3
     articles.sort(key=_sort_key)
-    prem = sum(1 for a in articles if a["premium"])
-    high = sum(1 for a in articles if a["high_value"] and not a["premium"])
+    prio = sum(1 for a in articles if a["priority"])
     rev  = sum(1 for a in articles if a.get("review_or_new"))
-    print(f"新着記事: {len(articles)}件（premium: {prem}件 / PC等高単価: {high}件 / レビュー・新発売: {rev}件）")
+    print(f"新着記事: {len(articles)}件（priority: {prio}件 / レビュー・新発売: {rev}件）")
     return articles, new_skips
 
 # ===== AMAZON URL =====
@@ -419,16 +358,7 @@ def _get_hints(title: str) -> dict:
     return DEFAULT_HINTS
 
 
-# WPカテゴリー定義（slug → 表示名）
-GADGET_CATEGORIES = {
-    "smartphone-tablet": "スマホ・タブレット",
-    "pc-peripheral":     "PC・周辺機器",
-    "camera-video":      "カメラ・映像",
-    "audio":             "オーディオ・ヘッドホン",
-    "game-vr":           "ゲーム・VR",
-    "smarthome-appliance": "スマートホーム・家電",
-    "other-gadget":      "その他ガジェット",
-}
+# WPカテゴリーIDキャッシュ {slug: wp_category_id}
 # カテゴリーIDキャッシュ {slug: wp_category_id}
 _wp_category_cache: dict = {}
 
@@ -502,19 +432,17 @@ def _build_prompt(article: dict, hints: dict, perplexity_info: str = "", lessons
         lesson_lines = "\n".join(f"- {l}" for l in lessons)
         lessons_section = f"\n【過去の改善指示（必ず守ること）】\n{lesson_lines}"
 
-    category_list = " / ".join(f"{s}（{n}）" for s, n in GADGET_CATEGORIES.items())
-
-    return f"""以下のガジェット・家電ニュースをもとに、Googleにインデックスされやすいオリジナルブログ記事を日本語で作成してください。
+    return f"""以下の暮らし・インテリア記事をもとに、Googleにインデックスされやすいオリジナルブログ記事を日本語で作成してください。
 
 記事タイトル: {title}
 記事URL: {url}
 記事概要: {summary}
 {image_section}{perplexity_section}
 以下のJSON形式のみで出力してください：
-{{"title": "検索意図を満たすSEOタイトル（30〜40字・数字や「レビュー」「比較」「特徴」などを含める）", "product_name": "製品の正式名称（ブランド名＋型番・楽天で検索して見つかる形式）", "meta_description": "検索結果に表示されるメタディスクリプション（100〜120字・製品の魅力と読む価値を伝える文章）", "category_slug": "カテゴリーslug（英小文字・ハイフン区切り）", "category_name": "カテゴリーの日本語表示名", "content": "HTMLの本文（下記の構成・ルールに従う）"}}
+{{"title": "検索意図を満たすSEOタイトル（30〜40字・数字や「収納」「インテリア」「アイデア」などを含める）", "product_name": "記事のメイン商品・テーマ名（楽天で検索して見つかる形式）", "meta_description": "検索結果に表示されるメタディスクリプション（100〜120字・記事の魅力と読む価値を伝える文章）", "category_slug": "カテゴリーslug（英小文字・ハイフン区切り）", "category_name": "カテゴリーの日本語表示名", "content": "HTMLの本文（下記の構成・ルールに従う）"}}
 
-既存カテゴリー（合致するものがあれば優先して使う）: {category_list}
-既存に合わないジャンルの場合は新しいslugと日本語名を自由に設定してよい（例: "drone"→"ドローン・空撮"）
+カテゴリー例（合致するものがあれば優先して使う）: interior（インテリア） / storage（収納・整理） / kitchen（キッチン・家事） / kurashi（暮らし全般） / smarthome（スマートホーム） / diy（DIY・リノベ） / myhome（マイホーム・住まい）
+合致しないジャンルの場合は新しいslugと日本語名を自由に設定してよい
 
 【本文の構成】
 <div class="point-box">
@@ -889,7 +817,7 @@ def post_article_to_x(article: dict, wp_url: str, amazon_url: str, rakuten_url: 
 
 # ===== MAIN =====
 def main():
-    posted_urls_list, skip_urls_dict, pc_streak = load_state()
+    posted_urls_list, skip_urls_dict = load_state()
     posted_urls_set = set(posted_urls_list)
 
     articles, new_skips = fetch_new_articles(posted_urls_set, skip_urls_dict)
@@ -897,16 +825,10 @@ def main():
 
     if not articles:
         print("新着記事なし")
-        save_state(posted_urls_list, skip_urls_dict, pc_streak)
+        save_state(posted_urls_list, skip_urls_dict)
         return
 
-    # PC抑制: PC系（high_value かつ premium でない）が連続したら非PCを優先
-    non_pc = [a for a in articles if not (a["high_value"] and not a["premium"])]
-    if pc_streak >= PC_INTERVAL and non_pc:
-        article = non_pc[0]  # premium or 普通記事
-        print(f"[PC抑制] PC系連続{pc_streak}件 → 非PC記事を選択")
-    else:
-        article = articles[0]  # premium優先（ソート済み）
+    article = articles[0]  # priority+review優先（ソート済み）
     print(f"処理中: {article['title']}")
 
     # 画像を先に取得（記事生成のビジョン分析に使うため）
@@ -918,7 +840,7 @@ def main():
         print(f"記事生成エラー: {e}")
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         skip_urls_dict[article["url"]] = today_str  # 生成失敗はskip（TTL内で再試行しない）
-        save_state(posted_urls_list, skip_urls_dict, pc_streak)
+        save_state(posted_urls_list, skip_urls_dict)
         return
 
     amazon_url = extract_amazon_url(article, fallback_keyword=generated.get("product_name", ""))
@@ -937,16 +859,13 @@ def main():
         post_url = post_to_wordpress(generated["title"], html_content, featured_media_id, excerpt, category_slug, category_name)
         print(f"投稿完了: {post_url}")
         posted_urls_set.add(article["url"])
-        is_pc = article["high_value"] and not article["premium"]
-        new_streak = (pc_streak + 1) if is_pc else 0
-        print(f"PC streak: {pc_streak} → {new_streak}")
-        save_state(list(posted_urls_set), skip_urls_dict, new_streak)
+        save_state(list(posted_urls_set), skip_urls_dict)
         article["category_slug"] = category_slug or ""
         post_article_to_x(article, post_url, amazon_url, rakuten_url, image_data)
     except Exception as e:
         print(f"WordPress投稿エラー: {e}")
         posted_urls_set.add(article["url"])
-        save_state(list(posted_urls_set), skip_urls_dict, pc_streak)
+        save_state(list(posted_urls_set), skip_urls_dict)
 
 if __name__ == "__main__":
     main()
