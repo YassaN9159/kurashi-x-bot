@@ -652,48 +652,15 @@ def post_to_x(tweet_text: str, media_ids: list | None = None, reply_to_tweet_id:
     return tweet_id
 
 
-def generate_blog_tweet(article: dict) -> str:
-    """WordPressブログ記事の紹介ツイートを生成する。URLはリプライで投稿するため含めない。"""
-    client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-    prompt = f"""以下のガジェット・家電ブログ記事をもとに、Xの投稿文を日本語で作成してください。
 
-記事タイトル: {article['title']}
-記事概要: {article['summary']}
-
-フォーマット：
-1行目: 数字・驚き・問いかけのいずれかで始めるフック文（例:「1万円以下でこの性能、どういうこと？」「バッテリー持続48時間のイヤホンが登場」「え、これ本当に○○円?」）
-2行目: 製品の一番尖った特徴を1文で
-3行目以降: 補足（価格情報があれば「実売X万円前後」の形で含める）
-最後: 「詳しくはブログで」「気になる人はチェック」などで締める
-
-ルール：
-- URLは含めない（リプライで別途投稿するため）
-- ですます調は使わない
-- 絵文字は冒頭に1〜2個だけ使ってよい（📱💻🎧🖥️⌨️📷🔋など製品に合うもの）
-- 140〜160文字程度で簡潔に
-- 投稿文のみ出力（説明不要）"""
-    message = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=600,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    tweet_body = message.content[0].text.strip()
-    hashtags = get_hashtags(article.get("source", ""), article.get("category_slug", ""))
-    product_hashtag = extract_product_hashtag(tweet_body)
-    if product_hashtag:
-        hashtags = f"{product_hashtag} {hashtags}"
-    return f"{tweet_body}\n\n{hashtags} #PR\n↓ リンクはリプ欄"
-
-
-def post_article_to_x(article: dict, wp_url: str, amazon_url: str, rakuten_url: str, image_data: bytes | None) -> None:
-    """ブログ記事をXに投稿する。メインツイート → リプライ（リンク）の2回投稿。失敗してもWordPress投稿には影響しない。"""
+def post_article_to_x(article: dict, tweet_text: str, amazon_url: str, rakuten_url: str, image_data: bytes | None) -> None:
+    """ツイートを投稿。メインツイート → リプライ（アフィリエイトリンク）の2回投稿。"""
     try:
-        tweet_text = generate_blog_tweet(article)
         print(f"生成されたツイート:\n{tweet_text}\n")
         media_id = upload_media_to_x(image_data) if image_data else None
         tweet_id = post_to_x(tweet_text, media_ids=[media_id] if media_id else None)
         if tweet_id:
-            reply_text = f"📝 ブログ → {wp_url}\n🛒 Amazon → {amazon_url}\n🛍️ 楽天 → {rakuten_url}"
+            reply_text = f"🛒 Amazon → {amazon_url}\n🛍️ 楽天 → {rakuten_url}"
             post_to_x(reply_text, reply_to_tweet_id=tweet_id)
             print(f"リプライ投稿完了 → tweet_id={tweet_id}")
     except Exception as e:
@@ -717,44 +684,29 @@ def main():
         save_state(posted_urls_list, skip_urls_dict)
         return
 
-    article = articles[0]  # priority+review優先（ソート済み）
+    article = articles[0]  # PRIORITY_KEYWORDS優先でソート済み
     print(f"処理中: {article['title']}")
 
-    # 画像を先に取得（記事生成のビジョン分析に使うため）
     image_data = fetch_ogp_image(article["url"])
 
     try:
         generated = generate_article(article, image_data=image_data)
     except Exception as e:
-        print(f"記事生成エラー: {e}")
+        print(f"コンテンツ生成エラー: {e}")
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        skip_urls_dict[article["url"]] = today_str  # 生成失敗はskip（TTL内で再試行しない）
+        skip_urls_dict[article["url"]] = today_str
         save_state(posted_urls_list, skip_urls_dict)
         return
 
     amazon_url = extract_amazon_url(article, fallback_keyword=generated.get("product_name", ""))
     rakuten_keyword = generated.get("product_name") or article["title"]
     rakuten_url = get_rakuten_url(rakuten_keyword)
-    html_content = build_post_html(generated["content"], article["url"], amazon_url, rakuten_url)
 
-    featured_media_id = None
-    if image_data:
-        featured_media_id = upload_image_to_wp(image_data)
+    post_article_to_x(article, generated["tweet_text"], amazon_url, rakuten_url, image_data)
 
-    try:
-        excerpt = generated.get("meta_description") or ""
-        category_slug = generated.get("category_slug") or None
-        category_name = generated.get("category_name") or ""
-        post_url = post_to_wordpress(generated["title"], html_content, featured_media_id, excerpt, category_slug, category_name)
-        print(f"投稿完了: {post_url}")
-        posted_urls_set.add(article["url"])
-        save_state(list(posted_urls_set), skip_urls_dict)
-        article["category_slug"] = category_slug or ""
-        post_article_to_x(article, post_url, amazon_url, rakuten_url, image_data)
-    except Exception as e:
-        print(f"WordPress投稿エラー: {e}")
-        posted_urls_set.add(article["url"])
-        save_state(list(posted_urls_set), skip_urls_dict)
+    posted_urls_set.add(article["url"])
+    save_state(list(posted_urls_set), skip_urls_dict)
+    print("完了")
 
 if __name__ == "__main__":
     main()
