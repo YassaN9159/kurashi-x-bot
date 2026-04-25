@@ -330,16 +330,6 @@ DEFAULT_HINTS = {
 }
 
 
-def _get_hints(title: str) -> dict:
-    """タイトルのキーワードからセクション別ヒントを取得"""
-    for rule in KEYWORD_HINTS:
-        if any(kw in title for kw in rule["keywords"]):
-            tag = rule["keywords"][0]
-            print(f"記事ヒント適用: {tag}")
-            return rule
-    return DEFAULT_HINTS
-
-
 # WPカテゴリーIDキャッシュ {slug: wp_category_id}
 # カテゴリーIDキャッシュ {slug: wp_category_id}
 _wp_category_cache: dict = {}
@@ -371,106 +361,49 @@ def analyze_image_with_claude(image_data: bytes, title: str) -> str:
     return ""
 
 
-def _extract_approved_numbers(summary: str, perplexity_info: str) -> str:
-    """元記事概要とPerplexity情報から数字情報を抽出して承認済みリストを返す"""
-    combined = summary + "\n" + perplexity_info
-    found = []
-    # 価格: ¥12,800 / 12,800円
-    found += re.findall(r'[¥￥][\d,]+(?:\.\d+)?|[\d,]+(?:\.\d+)?円', combined)
-    # 日付: 2024年4月19日 / 4月19日
-    found += re.findall(r'\d{4}年\d{1,2}月(?:\d{1,2}日)?|\d{1,2}月\d{1,2}日', combined)
-    # スペック数値: 256GB / 6.1インチ / 4000mAh / 3.7GHz
-    found += re.findall(r'[\d.]+\s*(?:GB|TB|MB|GHz|MHz|mAh|インチ|inch|mm|cm|kg|g(?!en)|W(?!\b)|Hz)', combined, re.IGNORECASE)
-    # シリーズ世代: 第3世代 / Gen 4
-    found += re.findall(r'第\d+世代|Gen\s*\d+', combined, re.IGNORECASE)
-    unique = list(dict.fromkeys(found))  # 順序を保ちつつ重複除去
-    return "・".join(unique) if unique else ""
-
-
-def _build_prompt(article: dict, hints: dict, perplexity_info: str = "", lessons: list = None,
+def _build_prompt(article: dict, perplexity_info: str = "", lessons: list = None,
                   image_analysis: str = "") -> str:
     if lessons is None:
         lessons = []
-    title = article['title']
-    url = article['url']
-    summary = article['summary']
+    title = article["title"]
+    summary = article["summary"]
 
     perplexity_section = ""
     if perplexity_info:
-        perplexity_section = f"\n## 記事内容・スペック情報（Perplexity調査結果）\n{perplexity_info}\n"
+        perplexity_section = f"\n## 参考情報（Perplexity調査結果）\n{perplexity_info}\n"
 
     image_section = ""
     if image_analysis:
-        image_section = f"\n## 製品画像から読み取れた情報\n{image_analysis}\n"
-
-    approved_numbers = _extract_approved_numbers(summary, perplexity_info)
-    if approved_numbers:
-        numbers_rule = f"\n【承認済み数字リスト】記事本文で使用できる具体的な数字はこれだけです: {approved_numbers}\nこのリストにない価格・日付・スペック数値・世代番号を本文中に一切記載してはならない。不明な場合は「公式サイトをご確認ください」と書くこと。"
-    else:
-        numbers_rule = "\n【数字使用禁止】元記事・追加情報に数値情報が確認できません。価格・発売日・スペック数値・世代番号などの具体的な数字を本文中に一切記載してはならない。「公式サイトをご確認ください」と書くこと。"
+        image_section = f"\n## 画像から読み取れた情報\n{image_analysis}\n"
 
     lessons_section = ""
     if lessons:
         lesson_lines = "\n".join(f"- {l}" for l in lessons)
         lessons_section = f"\n【過去の改善指示（必ず守ること）】\n{lesson_lines}"
 
-    return f"""以下の暮らし・インテリア記事をもとに、Googleにインデックスされやすいオリジナルブログ記事を日本語で作成してください。
+    return f"""あなたは暮らし・インテリア・収納の専門家として X（旧Twitter）に投稿するアカウントです。
+ターゲット：来年マイホームを建てる、または新居生活に向けて準備中の女性。楽天ROOMユーザーが共感・保存したくなる内容にする。
+
+以下の記事をもとに X 投稿文を作成してください。
 
 記事タイトル: {title}
-記事URL: {url}
 記事概要: {summary}
 {image_section}{perplexity_section}
+投稿タイプは以下のどちらかを選ぶ：
+1. Tips 投稿：「○○のコツ」「○○する方法」などの実用情報（記事から学べるポイントを抽出）
+2. 商品紹介：具体的な商品の魅力と使いどころ（記事に登場する商品がある場合）
+
+ルール：
+- 文体：丁寧語（です・ます調）
+- 絵文字：冒頭または途中に 1〜2 個だけ使う（🏠🛋️🌿🧹✨など暮らしに合うもの）
+- 文字数：140〜260 字（ハッシュタグ含む）
+- URL は含めない（リプライで別途投稿するため）
+- ハッシュタグを末尾に 2〜3 個
+- 投稿文のみ出力（説明・前置き不要）
+{lessons_section}
+
 以下のJSON形式のみで出力してください：
-{{"title": "検索意図を満たすSEOタイトル（30〜40字・数字や「収納」「インテリア」「アイデア」などを含める）", "product_name": "記事のメイン商品・テーマ名（楽天で検索して見つかる形式）", "meta_description": "検索結果に表示されるメタディスクリプション（100〜120字・記事の魅力と読む価値を伝える文章）", "category_slug": "カテゴリーslug（英小文字・ハイフン区切り）", "category_name": "カテゴリーの日本語表示名", "content": "HTMLの本文（下記の構成・ルールに従う）"}}
-
-カテゴリー例（合致するものがあれば優先して使う）: interior（インテリア） / storage（収納・整理） / kitchen（キッチン・家事） / kurashi（暮らし全般） / smarthome（スマートホーム） / diy（DIY・リノベ） / myhome（マイホーム・住まい）
-合致しないジャンルの場合は新しいslugと日本語名を自由に設定してよい
-
-【本文の構成】
-<div class="point-box">
-<p><strong>この記事のポイント</strong></p>
-<ul>
-<li>（この製品の最大の特徴を30字以内の体言止めで）</li>
-<li>（価格・コスパの結論を30字以内の体言止めで）</li>
-<li>（どんな人におすすめかを30字以内の体言止めで）</li>
-</ul>
-</div>
-
-<h2>この製品が注目される理由</h2>
-<p>製品の背景・登場した経緯・どんな人に向いているかを200字以上で独自の視点を交えて説明</p>
-
-<h2>主な特徴・スペック</h2>
-<p>{hints["spec_hint"]}</p>
-
-<h2>価格・発売情報</h2>
-<p>【厳守】承認済み数字リストの価格・発売日のみ記載する。リストにない場合は「価格・発売日は未発表です。公式サイトをご確認ください」とだけ書く。</p>
-
-<h2>こんな人におすすめ</h2>
-<p>{hints["recommend_hint"]}</p>
-
-<h2>よくある質問</h2>
-<p>この製品について読者が疑問に思いそうな質問を2〜3個、Q&A形式で完全な回答を書く（回答を途中で終わらせない）</p>
-
-<h2>編集部の視点・総評</h2>
-<p>【必須・200字以上】このガジェット・製品に対する編集部独自の意見・評価を書く。以下を必ず含めること：(1)競合製品との明確な差別化ポイント (2)実際に使った場合のメリット・デメリット (3)購入を迷っている人への具体的なアドバイス。「〜と思います」「〜でしょう」など主観的な表現を積極的に使い、情報の羅列ではなく本音のコメントを書くこと。</p>
-
-<h2>まとめ</h2>
-<p>150字以上で締めくくり。{hints["summary_hint"]}</p>
-
-【ルール】
-- JSONのみ出力（前後に説明文不要）
-- 元記事の文章をそのままコピーしない（重複コンテンツ回避）
-- 全体2000字以上（薄いコンテンツ回避・AdSense審査基準を満たすため）
-- 「編集部の視点・総評」セクションは必ず200字以上の独自考察を書く（最重要）
-- h2・h3タグと<p>・<table>タグを使用したHTML
-- point-boxの各<li>は体言止めで30字以内。「〜できる」ではなく「〜性能」「〜対応」などの名詞止め
-- 読者が「この記事を読んでよかった」と思える独自情報・視点を必ず含める
-- 「編集部の視点・総評」は200字未満の場合は失格とする（必ず200字以上書くこと）
-- 他製品との比較は必ず現行最新モデルを対象にする（型番が古いモデルを「現在の〜」と表現しない）
-- リーク・予測情報は「〜とされている」「〜の可能性がある」など断定しない表現を使う
-- 比較元のスペック（現行モデルのメモリ・チップなど）もリーク・未確認の場合は「〜とされる」「〜と伝えられる」と断定しない
-- 価格・発売情報セクションの末尾に「AmazonやAmazonでも在庫・価格を確認できます」という自然な一文を添える（強引なセールストークは不要）
-- 「こんな人におすすめ」セクションで具体的なユーザー像を3つ挙げ、各々に「〜な方にとって〇〇なのでおすすめです」という形で購入理由を明示する{numbers_rule}{lessons_section}"""
+{{"tweet_text": "Xに投稿するツイート本文（ハッシュタグ含む）", "product_name": "楽天・Amazon検索に使う商品名（商品がない場合は空文字）"}}"""
 
 
 # ===== PERPLEXITY ENRICHMENT =====
@@ -521,27 +454,29 @@ def enrich_with_perplexity(title: str, article_url: str = "") -> str:
     return ""
 
 
-def evaluate_article(article: dict, generated_html: str) -> list:
-    """生成記事を自己評価し、次回への改善ルールを1〜2件返す"""
+def evaluate_article(article: dict, generated_tweet: str) -> list:
+    """生成ツイートを自己評価し、次回への改善ルールを1〜3件返す"""
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
         return []
     try:
         client = anthropic.Anthropic(api_key=api_key)
-        prompt = f"""以下のガジェット記事をSEOとアフィリエイトコンバージョンの観点で評価してください。
+        prompt = f"""以下のXツイートを評価し、次回の改善点を抽出してください。
 
 元記事タイトル: {article['title']}
-元記事概要: {article.get('summary', '')[:300]}
+生成されたツイート:
+{generated_tweet}
 
-生成された記事のHTML（先頭2000文字）:
-{generated_html[:2000]}
+評価の観点：
+- 楽天ROOMユーザー（暮らし・インテリア好きな女性）に響く内容か
+- 丁寧語（です・ます調）で書かれているか
+- 絵文字の使い方は適切か
+- 具体的で役立つ情報が含まれているか
+- 140〜260字の範囲に収まっているか
 
-以下の観点で評価し、改善点を1〜2個、次回の記事生成時に適用できる具体的なルールとして返してください：
-- SEO: タイトルに検索されやすいキーワードが含まれているか、見出し構造が適切か
-- コンバージョン: 読者が「買いたい」と思えるベネフィット訴求ができているか（嘘・誇張は禁止）
-- 信頼性: 事実と推測が明確に区別されているか
-
-JSONの文字列リスト形式のみで出力してください（例: ["改善点1", "改善点2"]）"""
+改善点を箇条書き（1〜3個、各20字以内）でJSONリスト形式のみで出力してください：
+["改善点1", "改善点2"]
+改善点が特にない場合は空のリスト [] を返す。"""
 
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
@@ -561,7 +496,6 @@ JSONの文字列リスト形式のみで出力してください（例: ["改善
 def generate_article(article, image_data: bytes | None = None):
     api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     client = anthropic.Anthropic(api_key=api_key)
-    hints = _get_hints(article["title"])
 
     # OGP画像のビジョン分析
     image_analysis = ""
@@ -570,7 +504,7 @@ def generate_article(article, image_data: bytes | None = None):
         if image_analysis:
             print(f"画像分析完了 ({len(image_analysis)}文字)")
 
-    # Perplexityで記事本文要約＋最新スペック情報を一括取得
+    # Perplexity で記事内容・商品情報を補足
     perplexity_info = enrich_with_perplexity(article["title"], article["url"])
     if perplexity_info:
         print(f"Perplexity情報取得済み ({len(perplexity_info)}文字)")
@@ -579,11 +513,11 @@ def generate_article(article, image_data: bytes | None = None):
     if recent_lessons:
         print(f"過去の教訓 {len(recent_lessons)}件を適用")
 
-    prompt = _build_prompt(article, hints, perplexity_info, recent_lessons, image_analysis)
+    prompt = _build_prompt(article, perplexity_info, recent_lessons, image_analysis)
 
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
-        max_tokens=8000,
+        max_tokens=800,
         messages=[{"role": "user", "content": prompt}]
     )
     raw = message.content[0].text.strip()
@@ -592,11 +526,7 @@ def generate_article(article, image_data: bytes | None = None):
         raise ValueError(f"JSONが見つかりません: {raw[:200]}")
     result = json.loads(m.group())
 
-    # タイトルの全角スペース・余分な空白を正規化
-    if "title" in result:
-        result["title"] = result["title"].replace("\u3000", " ").strip()
-
-    new_lessons = evaluate_article(article, result.get("content", ""))
+    new_lessons = evaluate_article(article, result.get("tweet_text", ""))
     if new_lessons:
         save_lessons(new_lessons)
         print(f"教訓 {len(new_lessons)}件を保存")
