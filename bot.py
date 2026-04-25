@@ -148,14 +148,6 @@ def save_state(posted_urls, skip_urls_dict):
             "skip_urls": skip_urls_dict,
         }, f, ensure_ascii=False, indent=2)
 
-# レビュー・新発売キーワード（伸びやすい記事タイプ）
-REVIEW_OR_NEW_KEYWORDS = [
-    "レビュー", "評価", "実機", "ハンズオン", "使ってみた", "試した",
-    "比較", "vs", "VS", "対決", "違い", "どっち",
-    "新発売", "発売開始", "発表", "登場", "新モデル", "新型", "新製品",
-    "スペック", "仕様", "詳細", "まとめ",
-]
-
 # ===== FETCH RSS =====
 def _is_excluded(title: str) -> bool:
     return any(kw in title for kw in EXCLUDE_KEYWORDS)
@@ -166,32 +158,25 @@ def _is_kurashi_related(title: str) -> bool:
 def _is_priority(title: str) -> bool:
     return any(kw in title for kw in PRIORITY_KEYWORDS)
 
-def _is_review_or_new(title: str) -> bool:
-    return any(kw in title for kw in REVIEW_OR_NEW_KEYWORDS)
-
-
-def _is_gadget_by_claude(title: str, source: str) -> bool:
-    """Claude Haiku で記事が消費者向けガジェット記事か判定する。
+def _is_kurashi_by_claude(title: str, source: str) -> bool:
+    """Claude Haiku で記事が暮らし・インテリア・収納関連か判定する。
     API失敗時は True（フォールスルー）を返す。"""
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return True
+    client = anthropic.Anthropic(api_key=api_key)
+    prompt = (
+        f"以下の記事タイトルとソースが、暮らし・インテリア・収納・家事・新居に関連する内容か判定してください。\n"
+        f"タイトル: {title}\nソース: {source}\n"
+        f"関連する場合は「YES」、関連しない場合は「NO」とだけ答えてください。"
+    )
     try:
-        client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
-        prompt = (
-            f"次の記事は消費者向けの物理的なハードウェア製品（ガジェット・家電・PC・スマホ・カメラ等）に関する記事ですか？\n"
-            f"ソース: {source}\n"
-            f"タイトル: {title}\n"
-            f"注意: 以下のいずれかに該当する記事は「no」と答えてください。\n"
-            f"- ソフトウェア・アプリ・ドライバ・OSアップデート・Webサービスの記事\n"
-            f"- 中古・リユース・ジャンク品・フリマ・二次流通に関する記事\n"
-            f"新品の物理的なハードウェア製品についての記事のみ「yes」と答えてください。\n"
-            f"「yes」か「no」だけ答えてください。"
-        )
-        response = client.messages.create(
+        message = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=5,
-            messages=[{"role": "user", "content": prompt}],
+            max_tokens=10,
+            messages=[{"role": "user", "content": prompt}]
         )
-        answer = response.content[0].text.strip().lower()
-        return "yes" in answer
+        return "YES" in message.content[0].text.upper()
     except Exception:
         return True
 
@@ -234,7 +219,7 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
                     print(f"  [暮らし外] {short}")
                     new_skips[url] = today_str
                     continue
-                if not _is_gadget_by_claude(title, feed_info["name"]):
+                if not _is_kurashi_by_claude(title, feed_info["name"]):
                     stats["rejected_by_claude"] += 1
                     print(f"  [Claude除外] {short}")
                     new_skips[url] = today_str
@@ -242,17 +227,14 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
 
                 stats["passed"] += 1
                 is_prio = _is_priority(title)
-                is_rev = _is_review_or_new(title)
                 tier = "★priority" if is_prio else "📄normal"
-                rev_label = "📝" if is_rev else ""
-                print(f"  [通過✓] [{tier}]{rev_label} {short}")
+                print(f"  [通過✓] [{tier}] {short}")
                 articles.append({
                     "url": url,
                     "title": title,
                     "summary": entry.get("summary", "")[:500],
                     "source": feed_info["name"],
                     "priority": is_prio,
-                    "review_or_new": is_rev,
                 })
         except Exception as e:
             print(f"RSS fetch error ({feed_info['name']}): {e}")
@@ -648,47 +630,24 @@ def fetch_ogp_image(url):
     return None
 
 # ===== X (TWITTER) =====
-SOURCE_HASHTAGS = {
-    "価格.com 新製品":  "#ガジェット #新製品",
-    "PC Watch":         "#PC #ガジェット",
-    "AV Watch":         "#AV機器 #ガジェット",
-    "Akiba PC Hotline": "#自作PC #ガジェット",
-    "ASCII.jp":         "#ガジェット #テック",
-    "ITmedia ニュース":  "#ガジェット #テック",
-    "Engadget Japan":   "#ガジェット #レビュー",
-    "GIZMODO Japan":    "#ガジェット #テック",
-}
-
-CATEGORY_HASHTAGS = {
-    "smartphone":        "#スマホ #スマートフォン",
-    "earphone":          "#イヤホン #ワイヤレスイヤホン",
-    "headphone":         "#ヘッドホン",
-    "camera":            "#カメラ #写真",
-    "pc":                "#PC #パソコン",
-    "laptop":            "#ノートPC",
-    "gaming":            "#ゲーミング",
-    "tablet":            "#タブレット",
-    "smart-home":        "#スマートホーム",
-    "wearable":          "#ウェアラブル #スマートウォッチ",
-    "speaker":           "#スピーカー #音楽",
-    "keyboard":          "#キーボード",
-    "monitor":           "#モニター #ディスプレイ",
-    "router":            "#WiFi #ルーター",
-    "battery":           "#モバイルバッテリー",
-    "drone":             "#ドローン",
-    "storage":           "#SSD #ストレージ",
-    "projector":         "#プロジェクター",
-    "tv":                "#テレビ #4K",
-    "audio":             "#オーディオ #音楽",
-}
-
-
-def get_hashtags(source: str, category_slug: str = "") -> str:
-    source_tag = SOURCE_HASHTAGS.get(source, "#ガジェット #新製品")
-    category_tag = CATEGORY_HASHTAGS.get(category_slug, "")
-    if category_tag:
-        return f"{category_tag} {source_tag}"
-    return source_tag
+def get_hashtags(source: str, keyword: str = "") -> str:
+    base = "#暮らし #インテリア #マイホーム"
+    if keyword:
+        for k, tag in [
+            ("収納", "#収納"),
+            ("インテリア", "#インテリア"),
+            ("新築", "#新築"),
+            ("マイホーム", "#マイホーム"),
+            ("キッチン", "#キッチン"),
+            ("掃除", "#掃除"),
+            ("観葉植物", "#観葉植物"),
+            ("無印良品", "#無印良品"),
+            ("IKEA", "#IKEA"),
+            ("ニトリ", "#ニトリ"),
+        ]:
+            if k in keyword:
+                return f"{tag} {base}"
+    return base
 
 
 def extract_product_hashtag(tweet_text: str) -> str | None:
