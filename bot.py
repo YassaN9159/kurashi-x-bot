@@ -79,7 +79,8 @@ def load_recent_lessons(n: int = 3) -> list:
     try:
         if Path(LESSONS_FILE).exists():
             with open(LESSONS_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                raw = json.load(f)
+                data = raw if isinstance(raw, dict) else {"lessons": []}
                 lessons = [item["lesson"] for item in data.get("lessons", [])]
                 return lessons[-n:]
     except Exception as e:
@@ -93,7 +94,9 @@ def save_lessons(new_lessons: list) -> None:
         data = {"lessons": []}
         if Path(LESSONS_FILE).exists():
             with open(LESSONS_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                raw = json.load(f)
+                # 旧形式（list）を新形式（dict）に変換
+                data = raw if isinstance(raw, dict) else {"lessons": []}
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         for lesson in new_lessons:
             data["lessons"].append({"date": today, "lesson": lesson})
