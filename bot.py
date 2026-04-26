@@ -595,43 +595,63 @@ def extract_product_hashtag(tweet_text: str) -> str | None:
     return f"#{hashtag}"
 
 
-def _get_api_v1() -> tweepy.API:
-    """OAuth1認証済みのv1.1 APIクライアントを返す。"""
-    auth = tweepy.OAuth1UserHandler(
-        os.environ["X_API_KEY"],
-        os.environ["X_API_KEY_SECRET"],
-        os.environ["X_ACCESS_TOKEN"],
-        os.environ["X_ACCESS_TOKEN_SECRET"]
-    )
-    return tweepy.API(auth)
-
-
-def upload_media_to_x(image_data: bytes) -> int | None:
+def upload_media_to_x(image_data: bytes) -> str | None:
     """X v1.1 APIで画像をアップロードしてmedia_idを返す。失敗時はNone。"""
     if not image_data:
         return None
     try:
-        api_v1 = _get_api_v1()
+        auth = tweepy.OAuth1UserHandler(
+            os.environ["X_API_KEY"],
+            os.environ["X_API_KEY_SECRET"],
+            os.environ["X_ACCESS_TOKEN"],
+            os.environ["X_ACCESS_TOKEN_SECRET"]
+        )
+        api_v1 = tweepy.API(auth)
         media = api_v1.media_upload(filename="ogp.jpg", file=io.BytesIO(image_data))
         print(f"メディアアップロード完了 → media_id={media.media_id}")
-        return media.media_id
+        return str(media.media_id)
     except Exception as e:
         print(f"メディアアップロードエラー（テキストのみで投稿）: {e}")
         return None
 
 
 def post_to_x(tweet_text: str, media_ids: list | None = None, reply_to_tweet_id: str | None = None) -> str | None:
-    """X v1.1 APIでツイートを投稿する。成功時はtweet_idを返す。失敗時は例外を発生させる。"""
-    api_v1 = _get_api_v1()
-    kwargs = {"status": tweet_text}
+    """ツイートを投稿する。CF_WORKER_URL設定時はWorker経由、未設定時はtweepy直接呼び出し。"""
+    worker_url = os.environ.get("CF_WORKER_URL", "")
+    worker_key = os.environ.get("CF_WORKER_KEY", "")
+
+    if not worker_url or reply_to_tweet_id:
+        # Worker未設定時、またはリプライ投稿時は tweepy 直接呼び出し
+        client = tweepy.Client(
+            consumer_key=os.environ["X_API_KEY"],
+            consumer_secret=os.environ["X_API_KEY_SECRET"],
+            access_token=os.environ["X_ACCESS_TOKEN"],
+            access_token_secret=os.environ["X_ACCESS_TOKEN_SECRET"]
+        )
+        kwargs = {"text": tweet_text}
+        if media_ids:
+            kwargs["media_ids"] = media_ids
+        if reply_to_tweet_id:
+            kwargs["in_reply_to_tweet_id"] = reply_to_tweet_id
+        response = client.create_tweet(**kwargs)
+        tweet_id = str(response.data["id"])
+        print(f"X投稿完了 → https://x.com/i/web/status/{tweet_id}")
+        return tweet_id
+
+    payload = {"text": tweet_text}
     if media_ids:
-        kwargs["media_ids"] = media_ids
-    if reply_to_tweet_id:
-        kwargs["in_reply_to_status_id"] = reply_to_tweet_id
-        kwargs["auto_populate_reply_metadata"] = True
-    status = api_v1.update_status(**kwargs)
-    tweet_id = str(status.id)
-    print(f"X投稿完了 → https://x.com/i/web/status/{tweet_id}")
+        payload["media_ids"] = media_ids
+    resp = requests.post(
+        worker_url,
+        json=payload,
+        headers={"X-Worker-Key": worker_key},
+        timeout=15,
+    )
+    if not resp.ok:
+        raise Exception(f"Worker経由X投稿エラー: {resp.status_code} - {resp.text[:300]}")
+    data = resp.json()
+    tweet_id = str(data.get("data", {}).get("id", "unknown"))
+    print(f"X投稿完了（Worker経由）→ https://x.com/i/web/status/{tweet_id}")
     return tweet_id
 
 

@@ -32,6 +32,8 @@ jobs:
           X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
           ASSOCIATE_ID: ${{ secrets.ASSOCIATE_ID }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
+          CF_WORKER_KEY: ${{ secrets.CF_WORKER_KEY }}
         run: python bot.py
 
       - name: Commit state
