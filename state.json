@@ -1,18 +1,19 @@
 {
   "posted_urls": [
-    "https://www.roomie.jp/2026/04/1759329/",
-    "https://suumo.jp/journal/2026/04/24/216482/",
-    "https://www.roomie.jp/2026/04/1757782/",
-    "https://www.roomie.jp/2026/04/1740101/",
-    "https://www.roomie.jp/2026/04/1743343/",
     "https://www.roomie.jp/2026/04/1761636/",
+    "https://www.roomie.jp/2026/04/1763974/",
     "https://www.roomie.jp/2026/04/1765271/",
-    "https://kufura.jp/life/lifeslyle/711557",
-    "https://www.roomie.jp/2026/04/1762022/",
+    "https://www.roomie.jp/2026/04/1743343/",
+    "https://www.roomie.jp/2026/04/1765178/",
+    "https://lovegreen.net/homegarden/p366699/",
+    "https://www.roomie.jp/2026/04/1757782/",
+    "https://suumo.jp/journal/2026/04/24/216482/",
+    "https://www.roomie.jp/2026/04/1759329/",
     "https://kufura.jp/beauty_health/skin-care/171222",
     "https://suumo.jp/journal/2026/04/15/216430/",
-    "https://www.roomie.jp/2026/04/1763974/",
-    "https://www.roomie.jp/2026/04/1765178/"
+    "https://kufura.jp/life/lifeslyle/711557",
+    "https://www.roomie.jp/2026/04/1740101/",
+    "https://www.roomie.jp/2026/04/1762022/"
   ],
   "skip_urls": {
     "https://www.roomie.jp/2026/04/1755774/": "2026-04-25",
@@ -54,6 +55,24 @@
     "https://www.roomie.jp/2026/04/1752409/": "2026-04-26",
     "https://www.roomie.jp/2026/04/1765281/": "2026-04-26",
     "https://www.roomie.jp/2026/04/1763167/": "2026-04-26",
-    "https://www.roomie.jp/2026/04/1763432/": "2026-04-26"
+    "https://www.roomie.jp/2026/04/1763432/": "2026-04-26",
+    "https://lovegreen.net/series/p367177/": "2026-04-26",
+    "https://lovegreen.net/special/p367063/": "2026-04-26",
+    "https://lovegreen.net/special/p366498/": "2026-04-26",
+    "https://lovegreen.net/homegarden/p367171/": "2026-04-26",
+    "https://lovegreen.net/homegarden/p366984/": "2026-04-26",
+    "https://lovegreen.net/flower/p367029/": "2026-04-26",
+    "https://lovegreen.net/gardening/p366859/": "2026-04-26",
+    "https://lovegreen.net/flower/p366470/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kuruma/ctcd=7010/id=155997/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=camera/ctcd=0056/id=155954/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kuruma/ctcd=7010/id=155994/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kuruma/ctcd=7010/id=155992/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kuruma/ctcd=7610/id=155989/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kuruma/ctcd=7010/id=155988/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kaden/ctcd=3114/id=155996/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kuruma/ctcd=7010/id=155986/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kuruma/ctcd=7615/id=155981/": "2026-04-26",
+    "https://news.kakaku.com/prdnews/cd=kuruma/ctcd=7010/id=155979/": "2026-04-26"
   }
 }
