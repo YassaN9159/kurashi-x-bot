@@ -21,6 +21,11 @@ LESSONS_FILE = "lessons.json"
 MAX_LESSONS = 20
 
 RSS_FEEDS = [
+    # Amazon ベストセラー（最優先・keyword フィルタなし）
+    {"name": "Amazon ホーム&キッチン", "url": "https://www.amazon.co.jp/gp/rss/bestsellers/home/",      "trusted": True},
+    {"name": "Amazon 家具・インテリア", "url": "https://www.amazon.co.jp/gp/rss/bestsellers/furniture/", "trusted": True},
+    {"name": "Amazon キッチン",        "url": "https://www.amazon.co.jp/gp/rss/bestsellers/kitchen/",   "trusted": True},
+    # 暮らし系ブログ（keyword フィルタあり）
     {"name": "RoomClip マガジン",   "url": "https://magazine.roomclip.jp/feed"},
     {"name": "LIMIA",               "url": "https://limia.jp/feed/"},
     {"name": "ROOMIE",              "url": "https://www.roomie.jp/feed/"},
@@ -213,32 +218,38 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
                     stats["skip_cached"] += 1
                     print(f"  [スキップ済] {short}")
                     continue
-                if _is_excluded(title):
-                    stats["excluded"] += 1
-                    print(f"  [除外KW] {short}")
-                    new_skips[url] = today_str
-                    continue
-                if not _is_kurashi_related(title):
-                    stats["not_gadget_kw"] += 1
-                    print(f"  [暮らし外] {short}")
-                    new_skips[url] = today_str
-                    continue
-                if not _is_kurashi_by_claude(title, feed_info["name"]):
-                    stats["rejected_by_claude"] += 1
-                    print(f"  [Claude除外] {short}")
-                    new_skips[url] = today_str
-                    continue
+                trusted = feed_info.get("trusted", False)
+                if not trusted:
+                    if _is_excluded(title):
+                        stats["excluded"] += 1
+                        print(f"  [除外KW] {short}")
+                        new_skips[url] = today_str
+                        continue
+                    if not _is_kurashi_related(title):
+                        stats["not_gadget_kw"] += 1
+                        print(f"  [暮らし外] {short}")
+                        new_skips[url] = today_str
+                        continue
+                    if not _is_kurashi_by_claude(title, feed_info["name"]):
+                        stats["rejected_by_claude"] += 1
+                        print(f"  [Claude除外] {short}")
+                        new_skips[url] = today_str
+                        continue
 
                 stats["passed"] += 1
-                is_prio = _is_priority(title)
-                tier = "★priority" if is_prio else "📄normal"
+                is_prio = _is_priority(title) or trusted
+                tier = "🛒amazon" if trusted else ("★priority" if is_prio else "📄normal")
                 print(f"  [通過✓] [{tier}] {short}")
+                # Amazon RSS の summary は HTML を含むためプレーンテキストに変換
+                raw_summary = entry.get("summary", "")
+                summary = BeautifulSoup(raw_summary, "html.parser").get_text()[:500] if raw_summary else ""
                 articles.append({
                     "url": url,
                     "title": title,
-                    "summary": entry.get("summary", "")[:500],
+                    "summary": summary,
                     "source": feed_info["name"],
                     "priority": is_prio,
+                    "trusted": trusted,
                 })
         except Exception as e:
             print(f"RSS fetch error ({feed_info['name']}): {e}")
@@ -254,12 +265,14 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
         f"  通過: {stats['passed']}件"
     )
 
-    # ソート: 0: priority+review  1: priority  2: review  3: normal
+    # ソート: 0: amazon  1: priority+review  2: priority  3: review  4: normal
     def _sort_key(a):
+        if a.get("trusted"):
+            return 0
         rev = a.get("review_or_new", False)
         if a["priority"]:
-            return 0 if rev else 1
-        return 2 if rev else 3
+            return 1 if rev else 2
+        return 3 if rev else 4
     articles.sort(key=_sort_key)
     prio = sum(1 for a in articles if a["priority"])
     rev  = sum(1 for a in articles if a.get("review_or_new"))
