@@ -14,17 +14,13 @@ from pathlib import Path
 import urllib.parse
 
 # ===== CONFIG =====
-ASSOCIATE_ID = os.environ.get("ASSOCIATE_ID", "gadgetradarjp-22")
+ASSOCIATE_ID = os.environ.get("ASSOCIATE_ID", "yuri_depot-22")
 MOSHIMO_A_ID = "5492887"  # もしもアフィリエイト 楽天
 STATE_FILE = "state.json"
 LESSONS_FILE = "lessons.json"
 MAX_LESSONS = 20
 
 RSS_FEEDS = [
-    # Amazon ベストセラー（最優先・keyword フィルタなし）
-    {"name": "Amazon ホーム&キッチン", "url": "https://www.amazon.co.jp/gp/rss/bestsellers/home/",      "trusted": True},
-    {"name": "Amazon 家具・インテリア", "url": "https://www.amazon.co.jp/gp/rss/bestsellers/furniture/", "trusted": True},
-    {"name": "Amazon キッチン",        "url": "https://www.amazon.co.jp/gp/rss/bestsellers/kitchen/",   "trusted": True},
     # 暮らし系ブログ（keyword フィルタあり）
     {"name": "RoomClip マガジン",   "url": "https://magazine.roomclip.jp/feed"},
     {"name": "LIMIA",               "url": "https://limia.jp/feed/"},
@@ -32,8 +28,11 @@ RSS_FEEDS = [
     {"name": "ESSE online",         "url": "https://esse-online.jp/feed/"},
     {"name": "kufura",              "url": "https://kufura.jp/feed/"},
     {"name": "暮らしニスタ",         "url": "https://kurashinista.jp/feed"},
-    {"name": "北欧、暮らしの道具店", "url": "https://hokuohkurashi.com/note/feed"},
     {"name": "Suumo ジャーナル",    "url": "https://suumo.jp/journal/feed/"},
+    # 植物・ガーデニング（インテリアグリーン需要あり）
+    {"name": "LOVEGREEN",           "url": "https://lovegreen.net/feed/"},
+    # 価格.com 新製品ニュース（全ジャンル混在・keywordフィルタで暮らし系を抽出）
+    {"name": "価格.com 新製品",      "url": "https://news.kakaku.com/prdnews/rss/"},
 ]
 
 KURASHI_KEYWORDS = [
@@ -43,9 +42,14 @@ KURASHI_KEYWORDS = [
     # 収納・整理
     "収納", "整理", "片付け", "断捨離", "整頓", "収納グッズ", "仕切り",
     "ボックス", "かご", "引き出し", "クローゼット",
-    # キッチン・家事
-    "キッチン", "食洗機", "電気ケトル", "ホットクック", "電子レンジ",
+    # キッチン・家事家電
+    "キッチン", "食洗機", "電気ケトル", "ホットクック", "電子レンジ", "炊飯器",
+    "コーヒーメーカー", "トースター", "オーブンレンジ", "フライパン", "鍋",
     "掃除", "洗濯", "家事", "ロボット掃除機", "ルンバ", "ブラーバ",
+    "スティッククリーナー", "乾燥機", "アイロン", "スチーマー",
+    # 空調・生活家電
+    "空気清浄機", "加湿器", "除湿機", "扇風機", "サーキュレーター",
+    "アロマ", "ディフューザー",
     # 暮らし全般
     "暮らし", "生活", "丁寧な暮らし", "シンプルライフ", "ミニマリスト",
     "観葉植物", "グリーン", "DIY", "セルフリノベ",
@@ -68,8 +72,10 @@ PRIORITY_KEYWORDS = [
 # 除外キーワード（暮らし系以外のジャンルをスキップ）
 EXCLUDE_KEYWORDS = [
     "スマホ", "iPhone", "Android", "PC", "ノートPC", "パソコン", "タブレット",
+    "スマートフォン", "スマートウォッチ",
     "ゲーム", "PlayStation", "Nintendo", "Xbox",
-    "自動車", "クルマ", "バイク", "EV",
+    "自動車", "クルマ", "バイク", "EV", "モーターショー", "SUV", "セダン",
+    "アウディ", "BMW", "ベンツ", "トヨタ", "日産", "ボルボ", "VW", "フィアット",
     "株", "投資", "FX", "仮想通貨", "暗号資産",
     "アニメ", "マンガ", "映画", "ドラマ",
     "転職", "就活", "資格",
