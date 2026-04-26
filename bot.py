@@ -33,6 +33,8 @@ RSS_FEEDS = [
     {"name": "LOVEGREEN",           "url": "https://lovegreen.net/feed/"},
     # 価格.com 新製品ニュース（全ジャンル混在・keywordフィルタで暮らし系を抽出）
     {"name": "価格.com 新製品",      "url": "https://news.kakaku.com/prdnews/rss/"},
+    # マイベスト（商品比較ランキング記事・必ず実在商品名が含まれる）
+    {"name": "マイベスト",            "url": "https://my-best.com/rss"},
 ]
 
 KURASHI_KEYWORDS = [
@@ -412,9 +414,10 @@ def _build_prompt(article: dict, perplexity_info: str = "", lessons: list = None
 記事タイトル: {title}
 記事概要: {summary}
 {image_section}{perplexity_section}
-投稿タイプは以下のどちらかを選ぶ：
-1. Tips 投稿：「○○のコツ」「○○する方法」などの実用情報（記事から学べるポイントを抽出）
-2. 商品紹介：具体的な商品の魅力と使いどころ（記事に登場する商品がある場合）
+【重要】この投稿は必ず「具体的な商品紹介」にしてください。
+- 記事に登場する商品・製品名を必ず1つ特定し、その商品の魅力・使い方・おすすめポイントを紹介する
+- product_name は楽天・Amazonで検索できる実在の商品名（例：「ルンバ j7+」「山崎実業 tower 洗濯機横マグネット収納」など）
+- 具体的な商品が記事から特定できない場合は投稿しない → {{"skip": true}} を返す
 
 ルール：
 - 文体：丁寧語（です・ます調）
@@ -425,8 +428,10 @@ def _build_prompt(article: dict, perplexity_info: str = "", lessons: list = None
 - 投稿文のみ出力（説明・前置き不要）
 {lessons_section}
 
-以下のJSON形式のみで出力してください：
-{{"tweet_text": "Xに投稿するツイート本文（ハッシュタグ含む）", "product_name": "楽天・Amazon検索に使う商品名（商品がない場合は空文字）"}}"""
+以下のJSON形式のみで出力してください（商品が特定できない場合は skip のみ）：
+{{"tweet_text": "Xに投稿するツイート本文（ハッシュタグ含む）", "product_name": "楽天・Amazon検索に使う実在商品名"}}
+または
+{{"skip": true}}"""
 
 
 # ===== PERPLEXITY ENRICHMENT =====
@@ -548,6 +553,10 @@ def generate_article(article, image_data: bytes | None = None):
     if not m:
         raise ValueError(f"JSONが見つかりません: {raw[:200]}")
     result = json.loads(m.group())
+
+    if result.get("skip"):
+        print("商品特定不可 → スキップ")
+        return None
 
     new_lessons = evaluate_article(article, result.get("tweet_text", ""))
     if new_lessons:
@@ -718,6 +727,14 @@ def main():
         today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         skip_urls_dict[article["url"]] = today_str
         save_state(posted_urls_list, skip_urls_dict)
+        return
+
+    if generated is None:
+        # 商品特定不可 → スキップして次回の実行対象から除外
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        skip_urls_dict[article["url"]] = today_str
+        save_state(posted_urls_list, skip_urls_dict)
+        print("商品なし記事をスキップ済みに登録")
         return
 
     amazon_url = extract_amazon_url(article, fallback_keyword=generated.get("product_name", ""))
