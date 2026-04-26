@@ -1,11 +1,12 @@
 {
   "posted_urls": [
-    "https://kufura.jp/beauty_health/skin-care/171222",
-    "https://kufura.jp/life/lifeslyle/711557",
-    "https://www.roomie.jp/2026/04/1762022/",
-    "https://www.roomie.jp/2026/04/1763974/",
+    "https://www.roomie.jp/2026/04/1765178/",
     "https://www.roomie.jp/2026/04/1759329/",
-    "https://www.roomie.jp/2026/04/1740101/"
+    "https://kufura.jp/beauty_health/skin-care/171222",
+    "https://www.roomie.jp/2026/04/1740101/",
+    "https://www.roomie.jp/2026/04/1763974/",
+    "https://kufura.jp/life/lifeslyle/711557",
+    "https://www.roomie.jp/2026/04/1762022/"
   ],
   "skip_urls": {
     "https://www.roomie.jp/2026/04/1755774/": "2026-04-25",
@@ -40,6 +41,7 @@
     "https://www.roomie.jp/2026/04/1764564/": "2026-04-26",
     "https://www.roomie.jp/2026/04/1761169/": "2026-04-26",
     "https://www.roomie.jp/2026/04/1765302/": "2026-04-26",
-    "https://www.roomie.jp/2026/04/1765122/": "2026-04-26"
+    "https://www.roomie.jp/2026/04/1765122/": "2026-04-26",
+    "https://www.roomie.jp/2026/04/1764000/": "2026-04-26"
   }
 }
