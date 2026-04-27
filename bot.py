@@ -632,6 +632,12 @@ def fetch_ogp_image(url):
     return None
 
 # ===== X (TWITTER) =====
+def is_gw_sale_period() -> bool:
+    JST = timezone(timedelta(hours=9))
+    now = datetime.now(JST)
+    return datetime(2026, 4, 30, 9, 0, tzinfo=JST) <= now <= datetime(2026, 5, 3, 23, 59, tzinfo=JST)
+
+
 def get_hashtags(source: str, keyword: str = "") -> str:
     base = "#暮らし #インテリア #マイホーム"
     if keyword:
@@ -729,11 +735,14 @@ def post_article_to_x(article: dict, tweet_text: str, amazon_url: str, rakuten_u
     try:
         if "#PR" not in tweet_text:
             tweet_text = tweet_text + "\n#PR"
+        if is_gw_sale_period():
+            tweet_text = tweet_text + "\n🎌 GWスマイルSALE開催中！Amazonもチェック"
         print(f"生成されたツイート:\n{tweet_text}\n")
         media_id = upload_media_to_x(image_data) if image_data else None
         tweet_id = post_to_x(tweet_text, media_ids=[media_id] if media_id else None)
         if tweet_id:
-            reply_text = f"🛍️ 楽天 → {rakuten_url}\n🛒 Amazon → {amazon_url}"
+            gw_line = "\n🎌 GWセール → https://www.amazon.co.jp/events/monthlydealevent" if is_gw_sale_period() else ""
+            reply_text = f"🛍️ 楽天 → {rakuten_url}\n🛒 Amazon → {amazon_url}{gw_line}"
             post_to_x(reply_text, reply_to_tweet_id=tweet_id)
             print(f"リプライ投稿完了 → tweet_id={tweet_id}")
     except Exception as e:
