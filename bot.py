@@ -727,6 +727,8 @@ def post_to_x(tweet_text: str, media_ids: list | None = None, reply_to_tweet_id:
 def post_article_to_x(article: dict, tweet_text: str, amazon_url: str, rakuten_url: str, image_data: bytes | None) -> None:
     """ツイートを投稿。メインツイート → リプライ（アフィリエイトリンク）の2回投稿。"""
     try:
+        if "#PR" not in tweet_text:
+            tweet_text = tweet_text + "\n#PR"
         print(f"生成されたツイート:\n{tweet_text}\n")
         media_id = upload_media_to_x(image_data) if image_data else None
         tweet_id = post_to_x(tweet_text, media_ids=[media_id] if media_id else None)
