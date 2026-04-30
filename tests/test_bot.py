@@ -172,3 +172,33 @@ def test_is_sale_hit():
 def test_is_sale_miss():
     assert bot._is_sale("インテリアをすっきり見せる方法") is False
     assert bot._is_sale("無印良品の新作収納ボックスが登場") is False
+
+
+# ===== 17. _build_prompt — is_new=True でいいね訴求文が含まれる =====
+def test_build_prompt_new_product_contains_like_cta():
+    article = {
+        "title": "山崎実業から新発売のラック登場",
+        "summary": "山崎実業から新しいラックが登場しました。",
+    }
+    prompt = bot._build_prompt(article, is_new=True)
+    assert "いいね" in prompt
+
+
+# ===== 18. _build_prompt — is_sale=True でセール訴求文が含まれる =====
+def test_build_prompt_sale_contains_sale_hook():
+    article = {
+        "title": "ホットクックが3000円引きセール",
+        "summary": "ホットクックが期間限定セール中です。",
+    }
+    prompt = bot._build_prompt(article, is_sale=True)
+    assert "セール" in prompt or "お得" in prompt or "いいね" in prompt
+
+
+# ===== 19. _build_prompt — is_new=False, is_sale=False で保存訴求文が含まれる =====
+def test_build_prompt_lifestyle_contains_save_cta():
+    article = {
+        "title": "リビングのインテリアをすっきり見せるコツ",
+        "summary": "インテリアをすっきり見せる方法をご紹介します。",
+    }
+    prompt = bot._build_prompt(article, is_new=False, is_sale=False)
+    assert "保存" in prompt or "ブックマーク" in prompt

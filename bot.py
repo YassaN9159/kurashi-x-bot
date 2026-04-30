@@ -437,7 +437,7 @@ def analyze_image_with_claude(image_data: bytes, title: str) -> str:
 
 
 def _build_prompt(article: dict, perplexity_info: str = "", lessons: list = None,
-                  image_analysis: str = "") -> str:
+                  image_analysis: str = "", is_new: bool = False, is_sale: bool = False) -> str:
     if lessons is None:
         lessons = []
     title = article["title"]
@@ -455,6 +455,38 @@ def _build_prompt(article: dict, perplexity_info: str = "", lessons: list = None
     if lessons:
         lesson_lines = "\n".join(f"- {l}" for l in lessons)
         lessons_section = f"\n【過去の改善指示（必ず守ること）】\n{lesson_lines}"
+
+    if is_new:
+        format_instruction = (
+            "- フック：スペック・前モデルとの変化点・「買う価値があるか」の視点で書く\n"
+            "- 例：「待ってたやつ」「これが出たら旧モデルがお得になりそう」"
+        )
+        last_lines = (
+            "- 最後の1〜2文：「気になったらいいね👍」または「欲しいと思ったらいいねで教えて」\n"
+            "  （※予算確認してから買いたい人向けには「後で見返したい方はブックマーク📌」も可）"
+        )
+    elif is_sale:
+        format_instruction = (
+            "- フック：「今買うべき理由」「いくらお得か」を冒頭で明示する\n"
+            "- 例：「〇〇円引きは見逃せない」「GW中だけのチャンス」"
+        )
+        last_lines = (
+            "- 最後の1〜2文：「セール終わる前にいいねで保存👍」または「気になったらいいね」\n"
+            "  （※いいね訴求に統一。リプライ誘導は不可）"
+        )
+    else:
+        format_instruction = (
+            "- フック：「共感・真似したくなる」視点で書く。具体的な設置例・使い方シーンを入れる\n"
+            "- 例：「これ知らなかった」「マイホームに絶対取り入れたい」"
+        )
+        last_lines = (
+            "- 最後の1〜2文：以下から記事の文脈に合わせて1つ選ぶ\n"
+            "  「マイホーム計画中の方は保存しておいて📌」（新居・間取り系）\n"
+            "  「インテリアの参考になったら保存」（インテリア実例系）\n"
+            "  「真似したいと思ったらブックマーク🔖」（収納・片付け系）\n"
+            "  「後でゆっくり読み返して」（ハウツー・選び方系）"
+        )
+    format_section = f"\n【フォーマット指示】\n{format_instruction}\n{last_lines}"
 
     return f"""あなたは暮らし・インテリア・収納の専門家として X（旧Twitter）に投稿するアカウントです。
 ターゲット：来年マイホームを建てる、または新居生活に向けて準備中の女性。楽天ROOMユーザーが共感・保存したくなる内容にする。
@@ -482,6 +514,7 @@ def _build_prompt(article: dict, perplexity_info: str = "", lessons: list = None
 - URL は含めない（リプライで別途投稿するため）
 - ハッシュタグを末尾に 2〜3 個
 - 投稿文のみ出力（説明・前置き不要）
+{format_section}
 {lessons_section}
 
 以下のJSON形式のみで出力してください（商品が特定できない場合は skip のみ）：
@@ -598,7 +631,11 @@ def generate_article(article, image_data: bytes | None = None):
     if recent_lessons:
         print(f"過去の教訓 {len(recent_lessons)}件を適用")
 
-    prompt = _build_prompt(article, perplexity_info, recent_lessons, image_analysis)
+    prompt = _build_prompt(
+        article, perplexity_info, recent_lessons, image_analysis,
+        is_new=article.get("is_new", False),
+        is_sale=article.get("is_sale", False),
+    )
 
     message = client.messages.create(
         model="claude-haiku-4-5-20251001",
