@@ -757,7 +757,7 @@ def post_article_to_x(article: dict, tweet_text: str, amazon_url: str, rakuten_u
         media_id = upload_media_to_x(image_data) if image_data else None
         tweet_id = post_to_x(tweet_text, media_ids=[media_id] if media_id else None)
         if tweet_id:
-            gw_line = "\n🎌 GWセール → https://www.amazon.co.jp/events/monthlydealevent" if is_gw_sale_period() else ""
+            gw_line = f"\n🎌 GWセール → https://www.amazon.co.jp/events/monthlydealevent?tag={ASSOCIATE_ID}" if is_gw_sale_period() else ""
             reply_text = f"🛍️ 楽天 → {rakuten_url}\n🛒 Amazon → {amazon_url}{gw_line}"
             post_to_x(reply_text, reply_to_tweet_id=tweet_id)
             print(f"リプライ投稿完了 → tweet_id={tweet_id}")
