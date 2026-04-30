@@ -552,7 +552,8 @@ def evaluate_article(article: dict, generated_tweet: str) -> list:
             messages=[{"role": "user", "content": prompt}]
         )
         raw = message.content[0].text.strip()
-        m = re.search(r'\[[\s\S]+\]', raw)
+        raw = re.sub(r'```(?:json)?\n?', '', raw).strip()
+        m = re.search(r'\[[\s\S]*\]', raw)
         if m:
             return json.loads(m.group())
         print(f"evaluate_article: JSONリストが見つかりません: {raw[:100]}")

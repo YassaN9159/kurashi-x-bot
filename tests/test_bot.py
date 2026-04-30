@@ -122,3 +122,33 @@ def test_save_state_trims_old_urls(tmp_path, monkeypatch):
     # 古い先頭 URL が削除され、末尾の URL が残っている
     assert saved["posted_urls"][-1] == "https://example.com/200"
     assert "https://example.com/0" not in saved["posted_urls"]
+
+
+# ===== 13. evaluate_article — コードブロック付きJSON出力を正しくパースできる =====
+def test_evaluate_article_parses_fenced_json(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    article = {"title": "無印良品の収納ボックス", "summary": ""}
+    mock_message = MagicMock()
+    mock_message.content = [MagicMock(text='```json\n["絵文字を減らす", "文字数を短くする"]\n```')]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_message
+
+    with patch("anthropic.Anthropic", return_value=mock_client):
+        result = bot.evaluate_article(article, "サンプルツイート")
+
+    assert result == ["絵文字を減らす", "文字数を短くする"]
+
+
+# ===== 14. evaluate_article — 空リストを正しく返す =====
+def test_evaluate_article_parses_empty_list(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    article = {"title": "無印良品の収納ボックス", "summary": ""}
+    mock_message = MagicMock()
+    mock_message.content = [MagicMock(text='```json\n[]\n```')]
+    mock_client = MagicMock()
+    mock_client.messages.create.return_value = mock_message
+
+    with patch("anthropic.Anthropic", return_value=mock_client):
+        result = bot.evaluate_article(article, "サンプルツイート")
+
+    assert result == []
