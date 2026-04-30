@@ -88,7 +88,7 @@ PRIORITY_KEYWORDS = [
 NEW_PRODUCT_KEYWORDS = [
     "新発売", "発売開始", "発表", "登場", "新モデル", "新型", "新商品", "初登場",
 ]
-SALE_KEYWORDS_LIST = [
+SALE_KEYWORDS = [
     "セール", "割引", "タイムセール", "クーポン", "特価", "円引き", "オフ", "お得",
 ]
 
@@ -215,7 +215,7 @@ def _is_new_product(title: str) -> bool:
     return any(kw in title for kw in NEW_PRODUCT_KEYWORDS)
 
 def _is_sale(title: str) -> bool:
-    return any(kw in title for kw in SALE_KEYWORDS_LIST)
+    return any(kw in title for kw in SALE_KEYWORDS)
 
 def _is_kurashi_by_claude(title: str, source: str) -> bool:
     """Claude Haiku で記事が暮らし・インテリア・収納関連か判定する。
@@ -305,6 +305,7 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
                     "source": feed_info["name"],
                     "priority": is_prio,
                     "trusted": trusted,
+                    # _build_prompt() のフォーマット分岐で使用（Task 3 で参照）
                     "is_new": _is_new_product(title),
                     "is_sale": _is_sale(title),
                 })
