@@ -72,11 +72,11 @@ def test_is_excluded_passes_kurashi():
     assert bot._is_excluded("インテリアをおしゃれに見せる方法") is False
 
 
-# ===== 10. get_rakuten_url — URLに moshimo と MOSHIMO_A_ID が含まれる =====
-def test_get_rakuten_url_contains_moshimo():
+# ===== 10. get_rakuten_url — URLに楽天アフィリエイトIDが含まれる =====
+def test_get_rakuten_url_contains_rakuten_affiliate():
     url = bot.get_rakuten_url("収納ボックス")
-    assert "moshimo.com" in url
-    assert bot.MOSHIMO_A_ID in url
+    assert "hb.afl.rakuten.co.jp" in url
+    assert bot.RAKUTEN_AFFILIATE_ID in url
 
 
 # ===== 11. generate_article — Claude APIモックで tweet_text と product_name を返す =====

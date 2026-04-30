@@ -15,7 +15,7 @@ import urllib.parse
 
 # ===== CONFIG =====
 ASSOCIATE_ID = os.environ.get("ASSOCIATE_ID", "yuri_depot-22")
-MOSHIMO_A_ID = "5492887"  # もしもアフィリエイト 楽天
+RAKUTEN_AFFILIATE_ID = "5356bbe2.13f02a17.5356bbe3.eeb815f7"  # 楽天アフィリエイト
 STATE_FILE = "state.json"
 LESSONS_FILE = "lessons.json"
 MAX_LESSONS = 20
@@ -664,9 +664,8 @@ def get_rakuten_url(keyword):
     rakuten_search = f"https://search.rakuten.co.jp/search/mall/{encoded}/"
     encoded_rakuten = urllib.parse.quote(rakuten_search, safe="")
     return (
-        f"https://af.moshimo.com/af/c/click"
-        f"?a_id={MOSHIMO_A_ID}&p_id=54&pc_id=54&pl_id=616"
-        f"&url={encoded_rakuten}"
+        f"https://hb.afl.rakuten.co.jp/ichiba/{RAKUTEN_AFFILIATE_ID}/"
+        f"?pc={encoded_rakuten}&link_type=hybrid_url"
     )
 
 # ===== OGP IMAGE =====
