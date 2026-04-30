@@ -85,6 +85,13 @@ PRIORITY_KEYWORDS = [
     "ロボット掃除機", "食洗機", "ホットクック", "空気清浄機",
 ]
 
+NEW_PRODUCT_KEYWORDS = [
+    "新発売", "発売開始", "発表", "登場", "新モデル", "新型", "新商品", "初登場",
+]
+SALE_KEYWORDS_LIST = [
+    "セール", "割引", "タイムセール", "クーポン", "特価", "円引き", "オフ", "お得",
+]
+
 # 除外キーワード（ターゲットカテゴリ外をスキップ）
 EXCLUDE_KEYWORDS = [
     # スマートフォン・PC
@@ -204,6 +211,12 @@ def _is_kurashi_related(title: str) -> bool:
 def _is_priority(title: str) -> bool:
     return any(kw in title for kw in PRIORITY_KEYWORDS)
 
+def _is_new_product(title: str) -> bool:
+    return any(kw in title for kw in NEW_PRODUCT_KEYWORDS)
+
+def _is_sale(title: str) -> bool:
+    return any(kw in title for kw in SALE_KEYWORDS_LIST)
+
 def _is_kurashi_by_claude(title: str, source: str) -> bool:
     """Claude Haiku で記事が暮らし・インテリア・収納関連か判定する。
     API失敗時は True（フォールスルー）を返す。"""
@@ -292,6 +305,8 @@ def fetch_new_articles(posted_urls_set, skip_urls_dict):
                     "source": feed_info["name"],
                     "priority": is_prio,
                     "trusted": trusted,
+                    "is_new": _is_new_product(title),
+                    "is_sale": _is_sale(title),
                 })
         except Exception as e:
             print(f"RSS fetch error ({feed_info['name']}): {e}")

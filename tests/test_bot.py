@@ -152,3 +152,23 @@ def test_evaluate_article_parses_empty_list(monkeypatch):
         result = bot.evaluate_article(article, "サンプルツイート")
 
     assert result == []
+
+
+# ===== 15. _is_new_product — 新発売キーワードを検出する =====
+def test_is_new_product_hit():
+    assert bot._is_new_product("山崎実業から新発売の収納ラック登場") is True
+    assert bot._is_new_product("ニトリの新モデルチェアが発売開始") is True
+
+def test_is_new_product_miss():
+    assert bot._is_new_product("収納上手になる5つのコツ") is False
+    assert bot._is_new_product("無印良品セールで半額") is False
+
+
+# ===== 16. _is_sale — セールキーワードを検出する =====
+def test_is_sale_hit():
+    assert bot._is_sale("ホットクックが3000円引きのセール開催中") is True
+    assert bot._is_sale("IKEAの人気チェアが20%オフ") is True
+
+def test_is_sale_miss():
+    assert bot._is_sale("インテリアをすっきり見せる方法") is False
+    assert bot._is_sale("無印良品の新作収納ボックスが登場") is False
