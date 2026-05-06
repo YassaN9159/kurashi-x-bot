@@ -670,6 +670,7 @@ def get_rakuten_url(keyword):
 
 # ===== OGP IMAGE =====
 def fetch_ogp_image(url):
+    """OGP画像を取得する。戻り値: (image_data: bytes | None, image_url: str | None)"""
     try:
         headers = {"User-Agent": "Mozilla/5.0 (compatible; GadgetBlogBot/1.0)"}
         resp = requests.get(url, headers=headers, timeout=10)
@@ -679,10 +680,10 @@ def fetch_ogp_image(url):
             img_url = og_image["content"]
             img_resp = requests.get(img_url, headers=headers, timeout=10)
             if img_resp.status_code == 200 and len(img_resp.content) > 0:
-                return img_resp.content
+                return img_resp.content, img_url
     except Exception as e:
         print(f"OGP image fetch error: {e}")
-    return None
+    return None, None
 
 # ===== X (TWITTER) =====
 def is_gw_sale_period() -> bool:
@@ -806,6 +807,58 @@ def post_article_to_x(article: dict, tweet_text: str, amazon_url: str, rakuten_u
             print(f"X APIエラー詳細: {e.response.text}")
 
 
+# ===== THREADS =====
+def post_to_threads(text: str, image_url: str | None = None) -> str | None:
+    """Threads APIに投稿する。戻り値: media_id (str) or None"""
+    access_token = os.environ.get("THREADS_ACCESS_TOKEN", "")
+    user_id = os.environ.get("THREADS_USER_ID", "")
+    if not access_token or not user_id:
+        print("Threads認証情報未設定。スキップ")
+        return None
+
+    base = f"https://graph.threads.net/v1.0/{user_id}"
+
+    # Step1: メディアコンテナ作成
+    params: dict = {"text": text, "access_token": access_token}
+    if image_url:
+        params["media_type"] = "IMAGE"
+        params["image_url"] = image_url
+    else:
+        params["media_type"] = "TEXT"
+
+    resp = requests.post(f"{base}/threads", params=params, timeout=15)
+    if not resp.ok:
+        print(f"Threads コンテナ作成エラー: {resp.status_code} - {resp.text[:300]}")
+        return None
+    container_id = resp.json().get("id")
+
+    # Step2: 公開
+    resp2 = requests.post(
+        f"{base}/threads_publish",
+        params={"creation_id": container_id, "access_token": access_token},
+        timeout=15,
+    )
+    if not resp2.ok:
+        print(f"Threads 公開エラー: {resp2.status_code} - {resp2.text[:300]}")
+        return None
+    media_id = resp2.json().get("id")
+    print(f"Threads投稿完了 → https://www.threads.net/t/{media_id}")
+    return media_id
+
+
+def post_article_to_threads(tweet_text: str, amazon_url: str, rakuten_url: str, image_url: str | None) -> None:
+    """Threadsに本文＋アフィリエイトリンクをまとめて1投稿する。"""
+    try:
+        if "#PR" not in tweet_text:
+            tweet_text = tweet_text + "\n#PR"
+        body = f"{tweet_text}\n\n🛒 Amazon → {amazon_url}\n🛍️ 楽天 → {rakuten_url}"
+        post_to_threads(body, image_url=image_url)
+    except Exception as e:
+        import traceback
+        print(f"Threads投稿エラー: {e}")
+        traceback.print_exc()
+
+
 # ===== MAIN =====
 def main():
     posted_urls_list, skip_urls_dict = load_state()
@@ -822,7 +875,7 @@ def main():
     article = articles[0]  # PRIORITY_KEYWORDS優先でソート済み
     print(f"処理中: {article['title']}")
 
-    image_data = fetch_ogp_image(article["url"])
+    image_data, image_url = fetch_ogp_image(article["url"])
 
     try:
         generated = generate_article(article, image_data=image_data)
@@ -846,6 +899,7 @@ def main():
     rakuten_url = get_rakuten_url(rakuten_keyword)
 
     post_article_to_x(article, generated["tweet_text"], amazon_url, rakuten_url, image_data)
+    post_article_to_threads(generated["tweet_text"], amazon_url, rakuten_url, image_url)
 
     posted_urls_set.add(article["url"])
     save_state(list(posted_urls_set), skip_urls_dict)
